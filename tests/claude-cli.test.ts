@@ -801,3 +801,16 @@ test("reports upstream 5xx as retryable and keeps 4xx non-retryable", async () =
   assert.match(invalid.message, /Incomplete Claude Code upstream response \(status 400.*upstream said: bad request/);
   assert.equal(invalid.retryable, false);
 });
+
+test("rewriteInitialRequest accepts a string first user message from a slash-leading prompt", () => {
+  const body = { messages: [{ role: "user", content: "/Users/me/file.zip look at this" }] };
+  const out = JSON.parse(
+    rewriteInitialRequest(
+      Buffer.from(JSON.stringify(body)),
+      [{ type: "user", message: { role: "user", content: [{ type: "text", text: "/Users/me/file.zip look at this" }] } }],
+      [{ role: "system", content: "x" }],
+    ).toString("utf8"),
+  );
+  assert.equal(out.messages[0].content[0].type, "text");
+  assert.equal(out.messages[0].content[0].text, "/Users/me/file.zip look at this");
+});
